@@ -26,12 +26,12 @@ BOB Gateway is a Bitcoin intent bridge that unlocks Bitcoin liquidity by reducin
 ## Key Features
 
 <AccordionGroup>
-  <Accordion icon="bolt" title="Single Transaction Experience">
+  <Accordion icon="bolt" title="Single Transaction">
     Users can stake, swap, lend, or bridge Bitcoin with just one Bitcoin transaction - no multiple steps or bridging required.
   </Accordion>
 
   <Accordion icon="shield" title="Trustless & Secure">
-    Gateway uses atomic cross-chain swaps verified by an on-chain Bitcoin Light Client, making swaps trustless between all parties. Audited by Pashov and Common Prefix.
+    Gateway cross-chain swaps are verified by a Bitcoin Light Client. [Audited by Pashov and Common Prefix](https://docs.gobob.xyz/docs/reference/audits#bob-gateway).
   </Accordion>
 
   <Accordion icon="dollar-sign" title="Monetization Built-in">
@@ -39,7 +39,7 @@ BOB Gateway is a Bitcoin intent bridge that unlocks Bitcoin liquidity by reducin
   </Accordion>
 
   <Accordion icon="link" title="Cross-Chain Support">
-    Bridge Bitcoin to BOB and other LayerZero-supported chains like Ethereum, Base, and more.
+    Bridge Bitcoin to BOB and other chains like Ethereum, Base, and more.
   </Accordion>
 </AccordionGroup>
 
@@ -54,16 +54,16 @@ BOB Gateway is a Bitcoin intent bridge that unlocks Bitcoin liquidity by reducin
     Gateway API provides a quote with routing, fees, and estimated output
   </Step>
   
-  <Step title="Bitcoin Transaction">
-    User signs a single Bitcoin transaction that includes order parameters in OP_RETURN
+  <Step title="Transaction Signing">
+    User signs a single Bitcoin or EVM transaction
   </Step>
   
   <Step title="Verification & Execution">
     Bitcoin Light Client verifies the transaction on-chain, and the protocol executes the DeFi action
   </Step>
   
-  <Step title="Delivery">
-    User receives their tokens or staking position directly in their EVM wallet
+  <Step title="Token Delivery">
+    User receives their tokens or staking position directly in their wallet
   </Step>
 </Steps>
 
@@ -89,15 +89,6 @@ BOB Gateway is a Bitcoin intent bridge that unlocks Bitcoin liquidity by reducin
     Build any DeFi workflow you can imagine
   </Card>
 </CardGroup>
-
-## Security & Trust
-
-The protocol requires **zero trust** between market makers and users:
-
-- ✅ Atomic cross-chain swaps
-- ✅ Cryptographic verification via on-chain Bitcoin Light Client
-- ✅ No custody of user or LP funds by BOB infrastructure
-- ✅ [Audited by Pashov and Common Prefix](https://docs.gobob.xyz/docs/reference/audits#bob-gateway)
 
 ## Ready to Build?
 

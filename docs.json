@@ -11,12 +11,13 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Gateway SDK",
+        "tab": "Gateway",
         "groups": [
           {
             "group": "Overview",
             "pages": [
-              "gateway/overview"
+              "gateway/overview",
+              "gateway/technical"
             ]
           },
           {
@@ -24,7 +25,8 @@
             "pages": [
               "gateway/integration",
               "gateway/strategies",
-              "gateway/wallets"
+              "gateway/wallets",
+              "gateway/faq"
             ]
           }
         ]

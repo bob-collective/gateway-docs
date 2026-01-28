@@ -1,5 +1,5 @@
 ---
-title: "Integration Guide"
+title: "Gateway SDK"
 description: "Step-by-step guide to integrate BOB Gateway SDK into your application"
 icon: "code"
 ---
@@ -87,9 +87,8 @@ const quote = await gatewaySDK.getQuote({
   toUserAddress: '0x2D2E86236a5bC1c8a5e5499C517E17Fb88Dbc18c',
   amount: parseBtc("0.1"),
   gasRefill: parseEther("0.00001"),
-  // Monetization
-  affiliateFeeSats: 500n, // 500 sats per transaction
-  affiliateFeeRecipient: '0xYourAffiliateAddress',
+  // Monetization with affiliate ID
+  affiliateId: '550e8400-e29b-41d4-a716-446655440000', // Your unique UUID
 });
 ```
 
@@ -209,24 +208,43 @@ const orders = await gatewaySDK.getOrders(userEvmAddress);
 orders.forEach(order => {
   console.log(`Order ${order.orderId}: ${order.status}`);
   console.log(`Amount: ${order.amount}, Token: ${order.token}`);
+  
+  // Check for pending offramp actions
+  if (order.refundTx) {
+    console.log('Refund transaction available');
+  }
+  if (order.bumpFeeTx) {
+    console.log('Fee bump transaction available');
+  }
 });
 ```
 
 ## Offramp Features
 
-For offramp (BOB → Bitcoin) transactions, additional functionality is available:
+For offramp (BOB → Bitcoin) transactions, the `get-orders` API now returns EVM transactions that need to be submitted when actions are required:
 
 <AccordionGroup>
 
 <Accordion icon="gauge-high" title="Bump Transaction Fees">
 
-If Bitcoin network fees increase after order placement, bump the fee to speed up confirmation:
+If Bitcoin network fees increase after order placement, the order will include a `bumpFeeTx` that can be submitted to speed up confirmation:
 
 ```typescript
-await gatewaySDK.bumpFeeForOfframpOrder(orderId, {
-  walletClient,
-  publicClient,
-});
+const orders = await gatewaySDK.getOrders(userEvmAddress);
+
+// Find order with bump fee transaction
+const orderNeedingBump = orders.find(order => order.bumpFeeTx);
+
+if (orderNeedingBump) {
+  // Submit the bump fee transaction
+  const hash = await walletClient.sendTransaction({
+    to: orderNeedingBump.bumpFeeTx.to,
+    data: orderNeedingBump.bumpFeeTx.data,
+    value: orderNeedingBump.bumpFeeTx.value,
+  });
+  
+  await publicClient.waitForTransactionReceipt({ hash });
+}
 ```
 
 <Warning>
@@ -235,19 +253,30 @@ Only works if the original transaction hasn't been confirmed yet.
 
 </Accordion>
 
-<Accordion icon="unlock" title="Unlock Stuck Orders">
+<Accordion icon="unlock" title="Refund Stuck Orders">
 
-Cancel and unlock liquidity for stuck orders:
+If an order gets stuck or needs to be cancelled, the order will include a `refundTx` to unlock the locked assets:
 
 ```typescript
-await gatewaySDK.unlockOfframpOrder(orderId, receiverAddress, {
-  walletClient,
-  publicClient,
-});
+const orders = await gatewaySDK.getOrders(userEvmAddress);
+
+// Find order with refund transaction available
+const orderNeedingRefund = orders.find(order => order.refundTx);
+
+if (orderNeedingRefund) {
+  // Submit the refund transaction
+  const hash = await walletClient.sendTransaction({
+    to: orderNeedingRefund.refundTx.to,
+    data: orderNeedingRefund.refundTx.data,
+    value: orderNeedingRefund.refundTx.value,
+  });
+  
+  await publicClient.waitForTransactionReceipt({ hash });
+}
 ```
 
 <Warning>
-This action is irreversible. Once unlocked, the order cannot be resumed.
+This action is irreversible. Once refunded, the order cannot be resumed.
 </Warning>
 
 </Accordion>
@@ -257,43 +286,20 @@ This action is irreversible. Once unlocked, the order cannot be resumed.
 ## Monetization
 
 Gateway supports affiliate fees out of the box. You earn a fee on every transaction through your integration:
+ by providing your unique affiliate ID:
 
 ```typescript
 const quote = await gatewaySDK.getQuote({
   // ... other params
-  affiliateFeeSats: 500n, // Your fee (500 sats = ~$0.50 at $100k BTC)
-  affiliateFeeRecipient: '0xYourAddress', // Where fees are sent
+  affiliateId: '550e8400-e29b-41d4-a716-446655440000', // Your unique UUID
 });
 ```
 
-The affiliate fee is:
-- Deducted from the user's input amount
-- Sent directly to your specified EVM address
-- Visible in the quote response for transparency
-
-## Best Practices
-
-<Steps>
-  <Step title="Update Quotes Dynamically">
-    Re-fetch quotes when user changes input amount to show updated fees and output
-  </Step>
-  
-  <Step title="Show Fee Breakdown">
-    Display protocol fees, affiliate fees, and gas costs separately for transparency
-  </Step>
-  
-  <Step title="Handle Errors Gracefully">
-    Wrap SDK calls in try-catch and show user-friendly error messages
-  </Step>
-  
-  <Step title="Monitor Transaction Status">
-    Poll `getOrders()` to update UI as orders progress through states
-  </Step>
-  
-  <Step title="Test Thoroughly">
-    Test on BOB Sepolia testnet before deploying to mainnet
-  </Step>
-</Steps>
+Your affiliate ID:
+- Must be a valid UUID (universally unique identifier)
+- Tracks all transactions through your integration
+- Automatically associates earned fees with your account
+- Contact the BOB team to register your affiliate ID and set up fee structure
 
 ## Next Steps
 
@@ -309,16 +315,5 @@ The affiliate fee is:
   </Card>
   <Card title="Example Code" icon="github" href="https://github.com/bob-collective/bob/tree/master/sdk/examples">
     View complete examples on GitHub
-  </Card>
-</CardGroup>
-
-## Support
-
-<CardGroup cols={2}>
-  <Card title="Discord Community" icon="discord" href="https://discord.gg/gobob">
-    Get help from the BOB team and community
-  </Card>
-  <Card title="GitHub" icon="github" href="https://github.com/bob-collective/bob">
-    Report issues and contribute
   </Card>
 </CardGroup>
