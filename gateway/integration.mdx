@@ -1,0 +1,324 @@
+---
+title: "Integration Guide"
+description: "Step-by-step guide to integrate BOB Gateway SDK into your application"
+icon: "code"
+---
+
+## Overview
+
+The BOB Gateway SDK makes it easy to bring Bitcoin onramp functionality directly into your app. This guide walks through the complete integration process.
+
+## Installation
+
+<CodeGroup>
+
+```bash npm
+npm install @gobob/bob-sdk viem
+```
+
+```bash yarn
+yarn add @gobob/bob-sdk viem
+```
+
+```bash pnpm
+pnpm add @gobob/bob-sdk viem
+```
+
+</CodeGroup>
+
+## Initialize the SDK
+
+Import the `GatewayApiClient` (exported as `GatewaySDK`) and create an instance:
+
+```typescript
+import { GatewaySDK } from '@gobob/bob-sdk';
+import { bob, bobSepolia } from 'viem/chains';
+
+// Mainnet
+const gatewaySDK = new GatewaySDK(bob.id);
+
+// Testnet
+const gatewaySDKTestnet = new GatewaySDK(bobSepolia.id);
+```
+
+## Get Available Routes
+
+Fetch all supported routes to show users their options:
+
+```typescript
+const routes = await gatewaySDK.getRoutes();
+
+// Routes include information about:
+// - Source and destination chains
+// - Supported tokens
+// - Available bridges
+// - Fee structures
+```
+
+## Get a Quote
+
+Request a quote for the user's desired transaction:
+
+<CodeGroup>
+
+```typescript Basic Onramp
+import { parseBtc } from '@gobob/bob-sdk';
+import { parseEther } from 'viem';
+
+const quote = await gatewaySDK.getQuote({
+  fromChain: 'bitcoin',
+  fromToken: 'BTC',
+  fromUserAddress: 'bc1qafk4yhqvj4wep57m62dgrmutldusqde8adh20d',
+  toChain: 'bob',
+  toToken: 'wBTC',
+  toUserAddress: '0x2D2E86236a5bC1c8a5e5499C517E17Fb88Dbc18c',
+  amount: parseBtc("0.1"), // 0.1 BTC
+  gasRefill: parseEther("0.00001"), // Optional ETH gas refill
+});
+```
+
+```typescript With Affiliate Fees
+const quote = await gatewaySDK.getQuote({
+  fromChain: 'bitcoin',
+  fromToken: 'BTC',
+  fromUserAddress: 'bc1qafk4yhqvj4wep57m62dgrmutldusqde8adh20d',
+  toChain: 'bob',
+  toToken: 'wBTC',
+  toUserAddress: '0x2D2E86236a5bC1c8a5e5499C517E17Fb88Dbc18c',
+  amount: parseBtc("0.1"),
+  gasRefill: parseEther("0.00001"),
+  // Monetization
+  affiliateFeeSats: 500n, // 500 sats per transaction
+  affiliateFeeRecipient: '0xYourAffiliateAddress',
+});
+```
+
+```typescript Cross-Chain (LayerZero)
+const quote = await gatewaySDK.getQuote({
+  fromChain: 'bitcoin',
+  fromToken: 'BTC',
+  toChain: 'base', // Bridge to Base
+  toToken: '0x0555E30da8f98308EdB960aa94C0Db47230d2B9c', // wBTC on Base
+  fromUserAddress: 'bc1q...',
+  toUserAddress: '0x...',
+  amount: parseBtc("0.1"),
+});
+```
+
+</CodeGroup>
+
+<Tip>
+Display `quote.fee`, `quote.estimatedTime`, and other quote fields to give users transparency about the transaction.
+</Tip>
+
+## Execute the Quote
+
+Execute the quote by having the user sign the Bitcoin transaction:
+
+<CodeGroup>
+
+```typescript Reown AppKit
+import { createPublicClient, createWalletClient, http, zeroAddress } from 'viem';
+import { useAppKitProvider, useAppKitAccount } from '@reown/appkit/react';
+import type { BitcoinConnector } from "@reown/appkit-adapter-bitcoin";
+import { ReownWalletAdapter } from '@gobob/bob-sdk';
+import { bob } from 'viem/chains';
+
+// Setup viem clients
+const publicClient = createPublicClient({
+  chain: bob,
+  transport: http(),
+});
+
+const walletClient = createWalletClient({
+  chain: bob,
+  transport: http(),
+  account: zeroAddress, // Replace with connected account
+});
+
+// Get Bitcoin wallet provider
+const { walletProvider } = useAppKitProvider<BitcoinConnector>('bip122');
+const { address: btcAddress } = useAppKitAccount();
+
+// Execute the quote
+const txId = await gatewaySDK.executeQuote({
+  quote,
+  walletClient,
+  publicClient,
+  btcSigner: new ReownWalletAdapter(walletProvider, btcAddress),
+});
+
+console.log('Transaction ID:', txId);
+```
+
+```typescript OKX Wallet
+import { OkxWalletAdapter } from '@gobob/bob-sdk';
+
+// Assuming you have window.okxwallet available
+const txId = await gatewaySDK.executeQuote({
+  quote,
+  walletClient,
+  publicClient,
+  btcSigner: new OkxWalletAdapter(window.okxwallet),
+});
+```
+
+```typescript Custom Adapter
+import { BitcoinSigner } from '@gobob/bob-sdk';
+
+// Implement the BitcoinSigner interface
+class CustomWalletAdapter implements BitcoinSigner {
+  async sendBitcoin(params: {
+    from: string;
+    to: string;
+    value: string;
+    opReturn?: string;
+  }): Promise<string> {
+    // Your wallet integration logic here
+    // Return signed transaction hex
+  }
+  
+  // OR implement signAllInputs for PSBT-based wallets
+  async signAllInputs(psbtHex: string): Promise<string> {
+    // Sign PSBT and return hex
+  }
+}
+
+const txId = await gatewaySDK.executeQuote({
+  quote,
+  walletClient,
+  publicClient,
+  btcSigner: new CustomWalletAdapter(),
+});
+```
+
+</CodeGroup>
+
+<Note>
+For detailed wallet integration options including sats-wagmi, Dynamic.xyz, and more, see the [Bitcoin Wallets](/gateway/wallets) guide.
+</Note>
+
+## Monitor Orders
+
+Get the user's pending and completed orders:
+
+```typescript
+const orders = await gatewaySDK.getOrders(userEvmAddress);
+
+// Display orders in a table or list
+orders.forEach(order => {
+  console.log(`Order ${order.orderId}: ${order.status}`);
+  console.log(`Amount: ${order.amount}, Token: ${order.token}`);
+});
+```
+
+## Offramp Features
+
+For offramp (BOB → Bitcoin) transactions, additional functionality is available:
+
+<AccordionGroup>
+
+<Accordion icon="gauge-high" title="Bump Transaction Fees">
+
+If Bitcoin network fees increase after order placement, bump the fee to speed up confirmation:
+
+```typescript
+await gatewaySDK.bumpFeeForOfframpOrder(orderId, {
+  walletClient,
+  publicClient,
+});
+```
+
+<Warning>
+Only works if the original transaction hasn't been confirmed yet.
+</Warning>
+
+</Accordion>
+
+<Accordion icon="unlock" title="Unlock Stuck Orders">
+
+Cancel and unlock liquidity for stuck orders:
+
+```typescript
+await gatewaySDK.unlockOfframpOrder(orderId, receiverAddress, {
+  walletClient,
+  publicClient,
+});
+```
+
+<Warning>
+This action is irreversible. Once unlocked, the order cannot be resumed.
+</Warning>
+
+</Accordion>
+
+</AccordionGroup>
+
+## Monetization
+
+Gateway supports affiliate fees out of the box. You earn a fee on every transaction through your integration:
+
+```typescript
+const quote = await gatewaySDK.getQuote({
+  // ... other params
+  affiliateFeeSats: 500n, // Your fee (500 sats = ~$0.50 at $100k BTC)
+  affiliateFeeRecipient: '0xYourAddress', // Where fees are sent
+});
+```
+
+The affiliate fee is:
+- Deducted from the user's input amount
+- Sent directly to your specified EVM address
+- Visible in the quote response for transparency
+
+## Best Practices
+
+<Steps>
+  <Step title="Update Quotes Dynamically">
+    Re-fetch quotes when user changes input amount to show updated fees and output
+  </Step>
+  
+  <Step title="Show Fee Breakdown">
+    Display protocol fees, affiliate fees, and gas costs separately for transparency
+  </Step>
+  
+  <Step title="Handle Errors Gracefully">
+    Wrap SDK calls in try-catch and show user-friendly error messages
+  </Step>
+  
+  <Step title="Monitor Transaction Status">
+    Poll `getOrders()` to update UI as orders progress through states
+  </Step>
+  
+  <Step title="Test Thoroughly">
+    Test on BOB Sepolia testnet before deploying to mainnet
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Build DeFi Strategies" icon="layer-group" href="/gateway/strategies">
+    Create 1-click DeFi actions like staking and lending
+  </Card>
+  <Card title="Bitcoin Wallets" icon="wallet" href="/gateway/wallets">
+    Detailed guide on wallet integrations
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Complete API documentation
+  </Card>
+  <Card title="Example Code" icon="github" href="https://github.com/bob-collective/bob/tree/master/sdk/examples">
+    View complete examples on GitHub
+  </Card>
+</CardGroup>
+
+## Support
+
+<CardGroup cols={2}>
+  <Card title="Discord Community" icon="discord" href="https://discord.gg/gobob">
+    Get help from the BOB team and community
+  </Card>
+  <Card title="GitHub" icon="github" href="https://github.com/bob-collective/bob">
+    Report issues and contribute
+  </Card>
+</CardGroup>

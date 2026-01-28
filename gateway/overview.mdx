@@ -1,0 +1,106 @@
+---
+title: "Gateway Overview"
+description: "Introduction to BOB Gateway - Bitcoin intent bridge for seamless cross-chain interactions"
+icon: "bridge"
+---
+
+## What is BOB Gateway?
+
+BOB Gateway is a Bitcoin intent bridge that unlocks Bitcoin liquidity by reducing the number of steps to onboard users to your app. Users can go from **BTC** on Bitcoin to various DeFi protocols with a single Bitcoin transaction.
+
+<CardGroup cols={2}>
+  <Card title="Integration Guide" icon="code" href="/gateway/integration">
+    Get started with the SDK and integrate Gateway into your app
+  </Card>
+  <Card title="DeFi Strategies" icon="layer-group" href="/gateway/strategies">
+    Build 1-click DeFi actions for your users
+  </Card>
+  <Card title="API Reference" icon="book" href="/api-reference/introduction">
+    Explore the complete API documentation
+  </Card>
+  <Card title="Bitcoin Wallets" icon="wallet" href="/gateway/wallets">
+    Learn how to integrate Bitcoin wallet support
+  </Card>
+</CardGroup>
+
+## Key Features
+
+<AccordionGroup>
+  <Accordion icon="bolt" title="Single Transaction Experience">
+    Users can stake, swap, lend, or bridge Bitcoin with just one Bitcoin transaction - no multiple steps or bridging required.
+  </Accordion>
+
+  <Accordion icon="shield" title="Trustless & Secure">
+    Gateway uses atomic cross-chain swaps verified by an on-chain Bitcoin Light Client, making swaps trustless between all parties. Audited by Pashov and Common Prefix.
+  </Accordion>
+
+  <Accordion icon="dollar-sign" title="Monetization Built-in">
+    Earn affiliate fees on every transaction through your integration with simple configuration.
+  </Accordion>
+
+  <Accordion icon="link" title="Cross-Chain Support">
+    Bridge Bitcoin to BOB and other LayerZero-supported chains like Ethereum, Base, and more.
+  </Accordion>
+</AccordionGroup>
+
+## How It Works
+
+<Steps>
+  <Step title="User Initiates">
+    User requests a quote through your app for their desired DeFi action (stake, swap, bridge, etc.)
+  </Step>
+  
+  <Step title="Quote Generation">
+    Gateway API provides a quote with routing, fees, and estimated output
+  </Step>
+  
+  <Step title="Bitcoin Transaction">
+    User signs a single Bitcoin transaction that includes order parameters in OP_RETURN
+  </Step>
+  
+  <Step title="Verification & Execution">
+    Bitcoin Light Client verifies the transaction on-chain, and the protocol executes the DeFi action
+  </Step>
+  
+  <Step title="Delivery">
+    User receives their tokens or staking position directly in their EVM wallet
+  </Step>
+</Steps>
+
+## Use Cases
+
+<CardGroup cols={3}>
+  <Card title="Staking" icon="coins">
+    One-click BTC to staked BTC LSTs
+  </Card>
+  <Card title="Swapping" icon="arrow-right-arrow-left">
+    Direct BTC to any token on BOB or destination chains
+  </Card>
+  <Card title="Lending" icon="hand-holding-dollar">
+    Deposit BTC into lending protocols instantly
+  </Card>
+  <Card title="Cross-Chain" icon="arrows-split-up-and-left">
+    Bridge BTC to Ethereum, Base, and more
+  </Card>
+  <Card title="LP Positions" icon="water">
+    Add BTC liquidity to DEX pools
+  </Card>
+  <Card title="Custom Actions" icon="wand-magic-sparkles">
+    Build any DeFi workflow you can imagine
+  </Card>
+</CardGroup>
+
+## Security & Trust
+
+The protocol requires **zero trust** between market makers and users:
+
+- ✅ Atomic cross-chain swaps
+- ✅ Cryptographic verification via on-chain Bitcoin Light Client
+- ✅ No custody of user or LP funds by BOB infrastructure
+- ✅ [Audited by Pashov and Common Prefix](https://docs.gobob.xyz/docs/reference/audits#bob-gateway)
+
+## Ready to Build?
+
+<Card title="Start Integration" icon="rocket" href="/gateway/integration" horizontal>
+  Follow our step-by-step integration guide to add Gateway to your app
+</Card>
