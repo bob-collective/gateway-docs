@@ -6,7 +6,7 @@ icon: "lightbulb"
 
 ## Overview
 
-BOB Gateway is an intent-based bridge that enables Bitcoin users to access DeFi protocols with a single Bitcoin transaction. The protocol coordinates peer-to-peer swaps between users and liquidity providers (LPs) secured by an on-chain Bitcoin Light Client.
+BOB Gateway is an intent-based bridge that enables Bitcoin users to access DeFi protocols with a single Bitcoin transaction. The protocol coordinates peer-to-peer swaps between users and Solvers secured by an on-chain Bitcoin Light Client.
 
 ## Onramp: Bitcoin → BOB
 
@@ -85,7 +85,7 @@ sequenceDiagram
   </Step>
   
   <Step title="Proof & Settlement">
-    After Bitcoin confirmation, the Relayer submits a Merkle proof of the Bitcoin transaction to the `OfframpRegistry`. The contract verifies the proof and transfers the user's locked wrapped Bitcoin to the LP as reimbursement.
+    After Bitcoin confirmation, the Relayer submits a Merkle proof of the Bitcoin transaction to the `OfframpRegistry`. The contract verifies the proof and transfers the user's locked wrapped Bitcoin to the Solver as reimbursement.
   </Step>
   
   <Step title="Fallback Options">
